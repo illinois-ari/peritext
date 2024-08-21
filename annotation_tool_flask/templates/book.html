@@ -1,0 +1,415 @@
+{% extends "layout.html" %} {% block content %} {% with messages =
+get_flashed_messages(with_categories=true) %} {% if messages %}
+<div class="alert-container">
+  {% for category, message in messages %}
+  <div
+    class="alert alert-{{ category }} alert-dismissible fade show"
+    role="alert"
+  >
+    {{ message }}
+    <button
+      type="button"
+      class="btn-close"
+      data-bs-dismiss="alert"
+      aria-label="Close"
+    ></button>
+  </div>
+  {% endfor %}
+</div>
+{% endif %} {% endwith %}
+
+<style>
+  .mark-all-as-btn {
+    background-color: #f4c430;
+    border-color: #f4c430;
+    /* background-color: #0096ff;
+    border-color: #0096ff; */
+    color: black; /* Adjust this if you need a different text color */
+  }
+
+  .mark-all-as-btn:hover {
+    transform: scale(1.05);
+    color: black;
+  }
+
+  .save-btn {
+    background-color: #0096ff;
+    border-color: #0096ff;
+    color: white;
+    margin-right: 1rem;
+  }
+
+  .save-btn:hover {
+    transform: scale(1.05);
+    color: white;
+  }
+
+  .clear-btn {
+    background-color: #d70040;
+    border-color: #d70040;
+    color: white;
+  }
+
+  .clear-btn:hover {
+    transform: scale(1.05);
+    color: white;
+  }
+
+  .jump-btn {
+    background-color: #0096ff;
+    border-color: #0096ff;
+    color: white;
+  }
+  .jump-btn:hover {
+    transform: scale(1.05);
+    color: white;
+  }
+</style>
+
+<a href="{{ url_for('index') }}" class="btn btn-secondary btn-sm mb-3 mt-3"
+  >Back to Books</a
+>
+
+<div class="book-metadata mb-3">
+  <div><strong>ID:</strong> {{ book_id }}</div>
+  {% if metadata %}
+  <div><strong>Title:</strong> {{ metadata.title }}</div>
+  <div><strong>Author:</strong> {{ metadata.author }}</div>
+  <div><strong>Year:</strong> {{ metadata.rights_date_used }}</div>
+  {% endif %}
+</div>
+
+<div class="progress mb-3">
+  <div
+    class="progress-bar"
+    role="progressbar"
+    style="width: {{ book_completion }}%; background-color: #AFE1AF; color: black; font-weight: 500"
+    aria-valuenow="{{ book_completion }}"
+    aria-valuemin="0"
+    aria-valuemax="100"
+  >
+    {{ book_completion }}%
+  </div>
+</div>
+
+<div>
+  <form method="POST">
+    <div class="form-group">
+      <label for="volume_notes" class="form-label"
+        >Enter Notes about the Volume</label
+      >
+      <textarea
+        class="form-control"
+        id="volume_notes"
+        name="volume_notes"
+        rows="3"
+      >
+{{ volume_notes }}</textarea
+      >
+    </div>
+    <div class="d-flex justify-content-end mb-1">
+      <button
+        type="submit"
+        name="action"
+        value="save"
+        class="btn btn-sm save-btn"
+      >
+        Save
+      </button>
+      <button
+        type="submit"
+        id="clear-button"
+        name="action"
+        value="clear"
+        class="btn btn-sm clear-btn"
+      >
+        Clear
+      </button>
+    </div>
+  </form>
+</div>
+
+<hr class="mt-2 mb-3" />
+
+<div class="mb-3 d-flex justify-content-center">
+  <form method="post" id="range-annotation-form" class="d-flex">
+    <input
+      type="number"
+      name="from_page"
+      id="from_page"
+      class="form-control"
+      placeholder="From Page"
+      min="1"
+      style="width: 10rem; margin-right: 0.5rem"
+      required
+    />
+    <input
+      type="number"
+      name="to_page"
+      id="to_page"
+      class="form-control"
+      placeholder="To Page"
+      min="1"
+      style="width: 10rem; margin-right: 0.5rem"
+      required
+    />
+    <select
+      name="range_state"
+      id="range_state"
+      class="form-select"
+      style="margin-right: 0.5rem; border: 0; border-radius: 0.25rem"
+      required
+    >
+      <option value="" disabled selected>Select Label</option>
+      {% for state in states %}
+      <option value="{{ state }}">{{ state }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="btn save-btn">Save</button>
+  </form>
+</div>
+
+<div class="mb-3 d-flex justify-content-center">
+  <form method="post">
+    <button
+      type="submit"
+      name="mark_as_state"
+      value="{{ mark_as_state }}"
+      class="btn mark-all-as-btn"
+    >
+      Mark all as {{ mark_as_state }}
+    </button>
+  </form>
+</div>
+
+<hr class="mt-2 mb-3" />
+
+<div class="mb-3 d-flex justify-content-end">
+  <form method="post">
+    <button
+      type="submit"
+      name="jump_to_unannotated"
+      value="true"
+      class="btn jump-btn"
+    >
+      Jump to Next Unannotated Work
+    </button>
+  </form>
+</div>
+
+{% for page, text in content %}
+<div class="d-flex align-items-start my-3">
+  <div
+    class="page-number-card mr-2"
+    style="
+      background-color: white;
+      color: #d70040;
+      font-weight: bold;
+      padding: 0.5rem;
+      border-radius: 0.25rem;
+    "
+  >
+    {{ page.replace('.txt', '').lstrip('0') }}.
+  </div>
+  <div class="card" style="flex-grow: 1">
+    <div class="card-body">
+      <pre>{{ text }}</pre>
+      <form method="post" class="annotation-form">
+        <input type="hidden" name="page" value="{{ page }}" />
+        {% for state in states %}
+        <button
+          type="submit"
+          name="state"
+          value="{{ state }}"
+          class="btn btn-sm"
+          style="background-color: {% if annotations.get(page) == state %}#AFE1AF{% else %}#E5E4E2{% endif %}; color: black;"
+        >
+          {{ state }}
+        </button>
+        {% endfor %}
+      </form>
+    </div>
+  </div>
+</div>
+{% endfor %}
+
+<nav aria-label="Page navigation" style="margin-top: 4rem; margin-bottom: 2rem">
+  <ul class="pagination justify-content-center" style="font-size: 0.875rem">
+    {% if page > 1 %}
+    <li class="page-item">
+      <a
+        class="page-link"
+        href="{{ url_for('book', book_id=book_id, page=page-1) }}"
+        aria-label="Previous"
+        style="background-color: white; color: #0f52ba"
+      >
+        <span aria-hidden="true">&laquo;</span>
+        <span class="sr-only">Previous</span>
+      </a>
+    </li>
+    {% else %}
+    <li class="page-item disabled">
+      <a class="page-link" aria-label="Previous">
+        <span aria-hidden="true">&laquo;</span>
+        <span class="sr-only">Previous</span>
+      </a>
+    </li>
+    {% endif %} {% if page > 3 %}
+    <li class="page-item">
+      <a
+        class="page-link"
+        href="{{ url_for('book', book_id=book_id, page=1) }}"
+        style="color: #0f52ba"
+        >1</a
+      >
+    </li>
+    <li class="page-item">
+      <a
+        class="page-link"
+        href="{{ url_for('book', book_id=book_id, page=2) }}"
+        style="color: #0f52ba"
+        >2</a
+      >
+    </li>
+    <li class="page-item disabled"><span class="page-link">...</span></li>
+    {% endif %} {% for p in range(max(1, page - 2), min(total_pages, page + 2) +
+    1) %}
+    <li class="page-item {% if p == page %}active{% endif %}">
+      <a
+        class="page-link"
+        href="{{ url_for('book', book_id=book_id, page=p) }}"
+        style="color: black; {% if p == page %}border-color:#0F52BA; background-color:#0F52BA; color: white{% endif %} {% if p != page %}color: #0F52BA{% endif %}"
+      >
+        {{ p }}
+      </a>
+    </li>
+    {% endfor %} {% if page < total_pages - 2 %}
+    <li class="page-item disabled"><span class="page-link">...</span></li>
+    <li class="page-item">
+      <a
+        class="page-link"
+        href="{{ url_for('book', book_id=book_id, page=total_pages-1) }}"
+        style="color: #0f52ba"
+        >{{ total_pages-1 }}</a
+      >
+    </li>
+    <li class="page-item">
+      <a
+        class="page-link"
+        href="{{ url_for('book', book_id=book_id, page=total_pages) }}"
+        style="color: #0f52ba"
+        >{{ total_pages }}</a
+      >
+    </li>
+    {% endif %} {% if page < total_pages %}
+    <li class="page-item">
+      <a
+        class="page-link"
+        href="{{ url_for('book', book_id=book_id, page=page+1) }}"
+        aria-label="Next"
+        style="background-color: white; color: #0f52ba"
+      >
+        <span aria-hidden="true">&raquo;</span>
+        <span class="sr-only">Next</span>
+      </a>
+    </li>
+    {% else %}
+    <li class="page-item disabled">
+      <a class="page-link" aria-label="Next">
+        <span aria-hidden="true">&raquo;</span>
+        <span class="sr-only">Next</span>
+      </a>
+    </li>
+    {% endif %}
+  </ul>
+  <form
+    method="GET"
+    action="{{ url_for('book', book_id=book_id) }}"
+    class="d-flex justify-content-center mt-3"
+  >
+    <input
+      type="number"
+      name="page"
+      min="1"
+      max="{{ total_pages }}"
+      class="form-control"
+      placeholder="Go to page"
+      style="width: 10rem; margin-right: 1rem"
+    />
+    <button
+      type="submit"
+      class="btn btn-primary"
+      style="background-color: #0f52ba; color: white"
+    >
+      Go
+    </button>
+  </form>
+</nav>
+
+<script>
+  $(document).ready(function () {
+    $(".annotation-form button").on("click", function (e) {
+      e.preventDefault();
+
+      var form = $(this).closest("form");
+      var url = form.attr("action") || window.location.href;
+      var method = form.attr("method") || "POST";
+      var formData = new FormData(form[0]);
+
+      formData.set("state", $(this).val());
+
+      $.ajax({
+        type: method,
+        url: url,
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function (response) {
+          location.reload(); // Reload to update the button states
+        },
+        error: function (error) {
+          console.error("Error:", error);
+        },
+      });
+    });
+
+    $("#range-annotation-form").on("submit", function (e) {
+      e.preventDefault();
+
+      var fromPage = $("#from_page").val();
+      var toPage = $("#to_page").val();
+      var rangeState = $("#range_state").val();
+
+      if (fromPage && toPage && rangeState) {
+        $.ajax({
+          type: "POST",
+          url: window.location.href,
+          data: {
+            action: "range_annotation",
+            from_page: fromPage,
+            to_page: toPage,
+            range_state: rangeState,
+          },
+          success: function (response) {
+            $("#from_page").val("");
+            $("#to_page").val("");
+            $("#range_state").val("");
+            location.reload(); // Reload to update the annotations
+          },
+          error: function (error) {
+            console.error("Error:", error);
+          },
+        });
+      }
+    });
+  });
+
+  document
+    .getElementById("clear-button")
+    .addEventListener("click", function () {
+      document.getElementById("volume_notes").value = "";
+      document.forms[0].submit();
+    });
+</script>
+
+{% endblock %}
