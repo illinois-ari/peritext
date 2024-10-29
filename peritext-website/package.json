@@ -6,7 +6,7 @@
     "dev": "next dev",
     "start": "next start",
     "lint": "next lint",
-    "build": "NEXT_PUBLIC_DISABLE_ESLINT=true NEXT_PUBLIC_IGNORE_TYPE_ERRORS=true next build && next export",
+    "build": "next build && next export",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d out"
   },
