@@ -7,13 +7,13 @@ export const contactData = [
     position: "Staff Research Scientist",
     institution: "Applied Research Institute, University of Illinois at Urbana-Champaign",
     email: "alucic2@illinois.edu",
-    image: `/peritext-website/images/ana.jpeg`
+    image: `/peritext/images/ana.jpeg`
   },
   {
     name: "John Shanahan",
     position: "Professor of English",
     institution: "DePaul University",
     email: "jshanah1@depaul.edu",
-    image: `/peritext-website/images/john.jpeg`
+    image: `/peritext/images/john.jpeg`
   },
 ];
