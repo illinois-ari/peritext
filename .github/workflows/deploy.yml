@@ -24,15 +24,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Set working directory
+        run: echo "Changing directory to peritext-website"
+        working-directory: peritext-website
+
       - name: Detect package manager
         id: detect-package-manager
         run: |
-          if [ -f "${{ github.workspace }}/peritext-website/yarn.lock" ]; then
+          if [ -f "yarn.lock" ]; then
             echo "manager=yarn" >> $GITHUB_OUTPUT
             echo "command=install" >> $GITHUB_OUTPUT
             echo "runner=yarn" >> $GITHUB_OUTPUT
             exit 0
-          elif [ -f "${{ github.workspace }}/peritext-website/package-lock.json" ]; then
+          elif [ -f "package-lock.json" ]; then
             echo "manager=npm" >> $GITHUB_OUTPUT
             echo "command=ci" >> $GITHUB_OUTPUT
             echo "runner=npx --no-install" >> $GITHUB_OUTPUT
@@ -41,6 +45,7 @@ jobs:
             echo "Unable to determine package manager"
             exit 1
           fi
+        working-directory: peritext-website
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -55,12 +60,10 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
-            peritext-website/.next/cache
-          # Generate a new cache whenever packages or source files change.
-          key: ${{ runner.os }}-nextjs-${{ hashFiles('peritext-website/package-lock.json', 'peritext-website/yarn.lock') }}-${{ hashFiles('peritext-website/**/*.[jt]s', 'peritext-website/**/*.[jt]sx') }}
-          # If source files changed but packages didn't, rebuild from a prior cache.
+            .next/cache
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('package-lock.json', 'yarn.lock') }}-${{ hashFiles('**/*.[jt]s', '**/*.[jt]sx') }}
           restore-keys: |
-            ${{ runner.os }}-nextjs-${{ hashFiles('peritext-website/package-lock.json', 'peritext-website/yarn.lock') }}-
+            ${{ runner.os }}-nextjs-${{ hashFiles('package-lock.json', 'yarn.lock') }}-
 
       - name: Install dependencies
         run: ${{ steps.detect-package-manager.outputs.manager }} ${{ steps.detect-package-manager.outputs.command }}
@@ -73,7 +76,8 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: peritext-website/out
+          path: out
+        working-directory: peritext-website
 
   # Deployment job
   deploy:
