@@ -26,6 +26,16 @@ jobs:
           node-version: "18.17.0" # Use minimum required Node.js version for Next.js 14
           cache: npm
 
+      - name: Debug root directory
+        run: |
+          echo "Root directory contents:"
+          ls -la
+
+      - name: Debug peritext-website directory
+        run: |
+          echo "Contents of peritext-website:"
+          ls -la peritext-website
+
       - name: Install dependencies
         run: |
           cd peritext-website
